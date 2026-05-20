@@ -10,8 +10,9 @@ public class PlayerMovements : MonoBehaviour
     [SerializeField] private float mouseSensitivity;
         
     [Header("Jump and Fall")]
-    [SerializeField] private float initialFallVelocity = -2f;
+    [SerializeField]  private float jumpForce = 7f;
     [SerializeField] private float gravity = -12f;
+    [SerializeField] private float initialFallVelocity = -2f;
 
     [Header("References")]
     [SerializeField] private Transform cameraTransform;
@@ -19,7 +20,8 @@ public class PlayerMovements : MonoBehaviour
     [SerializeField] private InputActionReference lookAction;
     [SerializeField] private InputActionReference sprintAction;
     [SerializeField] private InputActionReference crouchAction;
- 
+    [SerializeField] private InputActionReference jumpAction;
+    
     private Vector2 _moveInput;
     private Vector2 _lookInput;
     private Vector2 _sprintInput;
@@ -63,6 +65,8 @@ public class PlayerMovements : MonoBehaviour
 
         crouchAction.action.performed += Crouch;
         crouchAction.action.canceled += Crouch;
+
+        jumpAction.action.performed += Jump;
     }
     
     private void OnDisable()
@@ -74,10 +78,10 @@ public class PlayerMovements : MonoBehaviour
         lookAction.action.canceled -= StoreCameraInput;
         
         sprintAction.action.performed -= Sprint;
-        sprintAction.action.canceled -= Sprint;
 
         crouchAction.action.performed -= Crouch;
-        crouchAction.action.canceled -= Crouch;
+        
+        jumpAction.action.performed -= Jump;
     }
 
     private void StoreMovementInput(InputAction.CallbackContext ctx)
@@ -88,6 +92,14 @@ public class PlayerMovements : MonoBehaviour
     private void StoreCameraInput(InputAction.CallbackContext ctx)
     {
         _lookInput = ctx.ReadValue<Vector2>();
+    }
+
+    private void Jump(InputAction.CallbackContext ctx)
+    {
+        if (_isGrounded)
+        {
+            _verticalVelocity = jumpForce;
+        }
     }
 
     private void Sprint(InputAction.CallbackContext ctx)
