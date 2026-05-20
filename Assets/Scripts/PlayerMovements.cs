@@ -17,20 +17,29 @@ public class PlayerMovements : MonoBehaviour
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private InputActionReference moveAction;
     [SerializeField] private InputActionReference lookAction;
+    [SerializeField] private InputActionReference sprintAction;
+    [SerializeField] private InputActionReference crouchAction;
  
     private Vector2 _moveInput;
     private Vector2 _lookInput;
+    private Vector2 _sprintInput;
+    private Vector2 _crouchInput;
     
     private float _verticalVelocity;
     private float _verticalAngle;
 
     private bool _isGrounded;
+    private bool _isSprinting;
+    private bool _isCrouching;
     
     private CharacterController _characterController;
     
     private void Awake()
     {
-        _characterController = GetComponent<CharacterController>();    
+        _characterController = GetComponent<CharacterController>();
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void Update()
@@ -48,6 +57,12 @@ public class PlayerMovements : MonoBehaviour
         
         lookAction.action.performed += StoreCameraInput;
         lookAction.action.canceled += StoreCameraInput;
+
+        sprintAction.action.performed += Sprint;
+        sprintAction.action.canceled += Sprint;
+
+        crouchAction.action.performed += Crouch;
+        crouchAction.action.canceled += Crouch;
     }
     
     private void OnDisable()
@@ -57,6 +72,12 @@ public class PlayerMovements : MonoBehaviour
         
         lookAction.action.performed -= StoreCameraInput;
         lookAction.action.canceled -= StoreCameraInput;
+        
+        sprintAction.action.performed -= Sprint;
+        sprintAction.action.canceled -= Sprint;
+
+        crouchAction.action.performed -= Crouch;
+        crouchAction.action.canceled -= Crouch;
     }
 
     private void StoreMovementInput(InputAction.CallbackContext ctx)
@@ -69,10 +90,20 @@ public class PlayerMovements : MonoBehaviour
         _lookInput = ctx.ReadValue<Vector2>();
     }
 
+    private void Sprint(InputAction.CallbackContext ctx)
+    {
+        _isSprinting = !_isSprinting;
+    }
+
+    private void Crouch(InputAction.CallbackContext ctx)
+    {
+        _isCrouching = !_isCrouching;
+    }
+
     private void HandleMovement()
     {
         var move = cameraTransform.TransformDirection(_moveInput.x, 0, _moveInput.y).normalized;
-        var finalMove = move * walkingSpeed;
+        var finalMove = move * (_isSprinting ? runningSpeed : walkingSpeed);
         finalMove.y = _verticalVelocity;
         
         var collisions = _characterController.Move(finalMove * Time.deltaTime);
